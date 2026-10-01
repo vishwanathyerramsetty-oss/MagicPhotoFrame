@@ -2,24 +2,40 @@
 <html lang="en">
 
 <head>
+
 <meta charset="UTF-8">
+
 <meta name="viewport"
-      content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+      content="width=device-width,
+               initial-scale=1.0,
+               viewport-fit=cover">
 
-<title>Magic Photo Frame - Lord Venkateswara</title>
+<title>Magic Photo Frame</title>
 
-<script async src="https://docs.opencv.org/4.x/opencv.js"></script>
+<script async
+        src="https://docs.opencv.org/4.x/opencv.js">
+</script>
 
 <style>
-*{box-sizing:border-box}
 
-html,body{
+/* =========================================================
+   BASIC PAGE
+   ========================================================= */
+
+*{
+    box-sizing:border-box;
+}
+
+html,
+body{
     margin:0;
     padding:0;
     width:100%;
     min-height:100%;
+
     background:#111;
     color:#fff;
+
     font-family:Arial,sans-serif;
     text-align:center;
 }
@@ -29,12 +45,19 @@ h1{
     font-size:23px;
 }
 
+
+/* =========================================================
+   CAMERA
+   ========================================================= */
+
 #camera{
     width:100%;
     max-width:700px;
     height:auto;
+
     display:block;
     margin:0 auto;
+
     background:#000;
 }
 
@@ -42,17 +65,32 @@ h1{
     display:none;
 }
 
+
+/* =========================================================
+   STATUS
+   ========================================================= */
+
 #status{
     margin:10px 12px;
     min-height:28px;
+
     font-size:17px;
 }
 
+
+/* =========================================================
+   START BUTTON
+   ========================================================= */
+
 #startButton{
+
     padding:14px 24px;
+
     font-size:18px;
+
     border:0;
     border-radius:9px;
+
     cursor:pointer;
 }
 
@@ -60,82 +98,177 @@ h1{
     opacity:.5;
 }
 
+
+/* =========================================================
+   FULL SCREEN VIDEO
+   ========================================================= */
+
 #videoContainer{
+
     display:none;
+
     position:fixed;
+
     inset:0;
+
     width:100%;
     height:100%;
+
     background:#000;
+
     z-index:100;
+
     align-items:center;
     justify-content:center;
 }
+
+
+/* =========================================================
+   VIDEO PLAYER
+   ========================================================= */
 
 #videoPlayer{
+
     width:100%;
     height:100%;
+
     object-fit:contain;
+
     background:#000;
 }
 
+
+/* =========================================================
+   CLOSE BUTTON
+   ========================================================= */
+
 #closeVideo{
+
     position:absolute;
+
     top:max(18px,env(safe-area-inset-top));
+
     right:18px;
+
     z-index:200;
+
     min-width:90px;
     height:55px;
+
     padding:0 18px;
+
     border:2px solid #fff;
+
     border-radius:12px;
-    background:rgba(0,0,0,.80);
+
+    background:rgba(0,0,0,0.80);
+
     color:#fff;
+
     font-size:20px;
+
     font-weight:bold;
+
     cursor:pointer;
-    box-shadow:0 3px 10px rgba(0,0,0,.7);
+
+    box-shadow:
+        0 3px 10px rgba(0,0,0,.7);
+
     display:flex;
+
     align-items:center;
     justify-content:center;
+
 }
+
+
+/* =========================================================
+   CLOSE BUTTON PRESS
+   ========================================================= */
 
 #closeVideo:active{
+
     transform:scale(.94);
+
     background:#333;
+
 }
 
+
+/* =========================================================
+   SOUND PANEL
+   ========================================================= */
+
 #soundPanel{
+
     display:none;
+
     position:absolute;
+
     left:0;
     right:0;
-    bottom:max(30px,env(safe-area-inset-bottom));
+
+    bottom:
+        max(30px,
+        env(safe-area-inset-bottom));
+
     z-index:201;
 }
 
+
 #playSoundButton{
+
     padding:14px 24px;
+
     font-size:18px;
+
     border:0;
+
     border-radius:9px;
+
     background:#fff;
+
     color:#000;
+
     font-weight:bold;
+
     cursor:pointer;
+
 }
+
 </style>
+
 </head>
+
 
 <body>
 
-<h1>MAGIC PHOTO FRAME</h1>
+
+<!-- =====================================================
+     TITLE
+     ===================================================== -->
+
+<h1>
+    MAGIC PHOTO FRAME
+</h1>
+
+
+<!-- =====================================================
+     START SCANNER
+     ===================================================== -->
 
 <button id="startButton"
         onclick="startScanner()"
         disabled>
+
     LOADING...
+
 </button>
+
+
+<!-- =====================================================
+     CAMERA
+     ===================================================== -->
 
 <video id="camera"
        autoplay
@@ -143,18 +276,43 @@ h1{
        muted>
 </video>
 
+
 <canvas id="canvas"></canvas>
 
+
+<!-- =====================================================
+     STATUS
+     ===================================================== -->
+
 <div id="status">
+
     Loading OpenCV...
+
 </div>
+
+
+<!-- =====================================================
+     VIDEO SCREEN
+     ===================================================== -->
 
 <div id="videoContainer">
 
+
+    <!-- ===============================================
+         CLOSE VIDEO BUTTON
+         =============================================== -->
+
     <button id="closeVideo"
             onclick="closeVideo()">
+
         ✕ CLOSE
+
     </button>
+
+
+    <!-- ===============================================
+         VIDEO
+         =============================================== -->
 
     <video id="videoPlayer"
            controls
@@ -162,12 +320,22 @@ h1{
            preload="metadata">
     </video>
 
+
+    <!-- ===============================================
+         SOUND BUTTON
+         =============================================== -->
+
     <div id="soundPanel">
+
         <button id="playSoundButton"
                 onclick="enableSound()">
+
             🔊 TAP FOR SOUND
+
         </button>
+
     </div>
+
 
 </div>
 
@@ -179,12 +347,20 @@ h1{
    ========================================================= */
 
 const GITHUB_BASE =
-    "https://vishwanathyerramsetty-oss.github.io/MagicPhotoFrame/";
+"https://vishwanathyerramsetty-oss.github.io/MagicPhotoFrame/";
 
 
 /* =========================================================
-   LORD VENKATESWARA PROJECT
-   19 PHOTOS / 19 VIDEOS
+   NUMBER OF PHOTOS
+   =========================================================
+
+   Currently 9.
+
+   When you have 16 Ganesha photos,
+   simply change this to:
+
+   const TOTAL_PHOTOS = 16;
+
    ========================================================= */
 
 const TOTAL_PHOTOS = 19;
@@ -195,20 +371,29 @@ const TOTAL_PHOTOS = 19;
    ========================================================= */
 
 const photoVideos =
-    Array.from(
-        {length:TOTAL_PHOTOS},
-        (_,i)=>{
+Array.from(
+    {length:TOTAL_PHOTOS},
+    (_,i)=>{
 
-            const n =
-                String(i+1).padStart(3,"0");
+        const n =
+            String(i+1).padStart(3,"0");
 
-            return {
-                id:"PHOTO_"+n,
-                image:"photos/PHOTO_"+n+".jpg",
-                video:GITHUB_BASE+"PHOTO_"+n+".mp4"
-            };
-        }
-    );
+        return {
+
+            id:
+                "PHOTO_"+n,
+
+            image:
+                "photos/PHOTO_"+n+".jpg",
+
+            video:
+                GITHUB_BASE+
+                "PHOTO_"+n+".mp4"
+
+        };
+
+    }
+);
 
 
 /* =========================================================
@@ -232,6 +417,7 @@ let soundPanel;
    ========================================================= */
 
 let referencePhotos=[];
+
 let liveOrb=null;
 
 
@@ -240,6 +426,7 @@ let liveOrb=null;
    ========================================================= */
 
 let scannerRunning=false;
+
 let videoPlaying=false;
 
 
@@ -248,59 +435,54 @@ let videoPlaying=false;
    ========================================================= */
 
 let lastDetectionTime=0;
+
 let lastScanTime=0;
 
 let candidateId=null;
+
 let candidateCount=0;
 
 
 /* =========================================================
    RECOGNITION SETTINGS
-
-   These are deliberately stricter than the old
-   "good matches >= 22" system.
-
-   A candidate must pass:
-   1. Lowe ratio
-   2. RANSAC geometric verification
-   3. Inlier ratio
-   4. Best-vs-second-best margin
-   5. Consecutive frame confirmation
    ========================================================= */
 
-const MATCH_RATIO = 0.70;
+/*
+   Number of good ORB matches required.
+*/
 
-const MIN_GOOD_MATCHES = 18;
-
-const MIN_RANSAC_INLIERS = 10;
-
-const MIN_INLIER_RATIO = 0.30;
-
-const MIN_RELATIVE_MARGIN = 0.20;
-
-const REQUIRED_CONFIRMATIONS = 2;
-
-const SCAN_INTERVAL = 150;
-
-const DETECTION_COOLDOWN = 4000;
+const REQUIRED_MATCHES = 22;
 
 
 /*
-   Special stricter rule for the closest candidates.
+   Number of consecutive successful
+   scans required.
 
-   We already know PHOTO_009 and PHOTO_010 can
-   look very similar. The same mechanism can
-   be expanded later if another pair is found.
+   2 = faster than your original 3.
 */
 
-const SPECIAL_SIMILAR_PAIRS = new Set([
-    "PHOTO_009|PHOTO_010",
-    "PHOTO_010|PHOTO_009"
-]);
+const REQUIRED_CONFIRMATIONS = 2;
 
-const SPECIAL_MIN_INLIERS = 15;
-const SPECIAL_MIN_INLIER_RATIO = 0.40;
-const SPECIAL_MIN_RELATIVE_MARGIN = 0.25;
+
+/*
+   Scan every 150 milliseconds.
+*/
+
+const SCAN_INTERVAL = 150;
+
+
+/*
+   Lowe's ratio test.
+*/
+
+const MATCH_RATIO = 0.70;
+
+
+/*
+   Prevent immediate repeated recognition.
+*/
+
+const DETECTION_COOLDOWN = 4000;
 
 
 /* =========================================================
@@ -316,53 +498,7 @@ function onOpenCvReady(){
 
     startButton.innerText =
         "START SCANNER";
-}
 
-
-/* =========================================================
-   CREATE BORDER-REDUCING MASK
-
-   Your 19 Lord Venkateswara images share a lot of
-   decorative border information.
-
-   We keep the main image and title area but reduce
-   the influence of the outer border.
-   ========================================================= */
-
-function createRecognitionMask(width,height){
-
-    const mask =
-        new cv.Mat(
-            height,
-            width,
-            cv.CV_8UC1,
-            new cv.Scalar(0)
-        );
-
-    const x =
-        Math.round(width*0.08);
-
-    const y =
-        Math.round(height*0.05);
-
-    const w =
-        Math.round(width*0.84);
-
-    const h =
-        Math.round(height*0.89);
-
-    const white =
-        new cv.Scalar(255);
-
-    cv.rectangle(
-        mask,
-        new cv.Point(x,y),
-        new cv.Point(x+w,y+h),
-        white,
-        -1
-    );
-
-    return mask;
 }
 
 
@@ -378,98 +514,144 @@ async function loadReferencePhoto(photo){
             const img =
                 new Image();
 
+
             img.onload=function(){
 
                 try{
 
+                    /*
+                       Use 480px reference width
+                       for faster processing.
+                    */
+
                     const targetWidth=480;
 
                     const scale =
-                        targetWidth/img.width;
+                        targetWidth/
+                        img.width;
+
 
                     const refCanvas =
-                        document.createElement("canvas");
+                        document.createElement(
+                            "canvas"
+                        );
+
 
                     refCanvas.width =
                         targetWidth;
+
 
                     refCanvas.height =
                         Math.round(
                             img.height*scale
                         );
 
+
                     const ctx =
-                        refCanvas.getContext("2d");
+                        refCanvas.getContext(
+                            "2d"
+                        );
+
 
                     ctx.drawImage(
+
                         img,
+
                         0,
                         0,
+
                         refCanvas.width,
                         refCanvas.height
+
                     );
 
+
+                    /*
+                       Convert to OpenCV.
+                    */
+
                     const mat =
-                        cv.imread(refCanvas);
+                        cv.imread(
+                            refCanvas
+                        );
+
 
                     const gray =
                         new cv.Mat();
 
+
                     cv.cvtColor(
+
                         mat,
+
                         gray,
+
                         cv.COLOR_RGBA2GRAY
+
                     );
 
-                    const mask =
-                        createRecognitionMask(
-                            gray.cols,
-                            gray.rows
-                        );
+
+                    /*
+                       ORB detector.
+                    */
 
                     const orb =
-                        new cv.ORB(1200);
+                        new cv.ORB(600);
+
 
                     const keypoints =
                         new cv.KeyPointVector();
 
+
                     const descriptors =
                         new cv.Mat();
 
+
                     orb.detectAndCompute(
+
                         gray,
-                        mask,
+
+                        new cv.Mat(),
+
                         keypoints,
+
                         descriptors
+
                     );
 
-                    if(descriptors.empty()){
 
-                        console.warn(
-                            "No descriptors:",
-                            photo.id
-                        );
-                    }
+                    /*
+                       Store descriptors.
+                    */
 
                     referencePhotos.push({
 
-                        id:photo.id,
+                        id:
+                            photo.id,
 
-                        video:photo.video,
+                        video:
+                            photo.video,
 
-                        keypoints:keypoints,
+                        descriptors:
+                            descriptors.clone()
 
-                        descriptors:descriptors,
-
-                        width:gray.cols,
-
-                        height:gray.rows
                     });
 
+
+                    /*
+                       Release memory.
+                    */
+
                     mat.delete();
+
                     gray.delete();
-                    mask.delete();
+
                     orb.delete();
+
+                    keypoints.delete();
+
+                    descriptors.delete();
+
 
                     resolve();
 
@@ -477,8 +659,11 @@ async function loadReferencePhoto(photo){
                 catch(error){
 
                     reject(error);
+
                 }
+
             };
+
 
             img.onerror=function(){
 
@@ -488,37 +673,45 @@ async function loadReferencePhoto(photo){
                         photo.image
                     )
                 );
+
             };
 
+
             img.src=photo.image;
+
         }
     );
+
 }
 
 
 /* =========================================================
-   LOAD ALL 19 REFERENCE PHOTOS
+   LOAD ALL REFERENCE PHOTOS
    ========================================================= */
 
 async function loadReferencePhotos(){
 
     statusText.innerText =
-        "Loading 19 reference photos...";
+        "Loading reference photos...";
+
 
     referencePhotos=[];
+
 
     for(
         const photo of photoVideos
     ){
 
-        statusText.innerText =
-            "Loading "+photo.id+"...";
+        await loadReferencePhoto(
+            photo
+        );
 
-        await loadReferencePhoto(photo);
     }
 
+
     statusText.innerText =
-        "Ready. Point camera at a PHOTO.";
+        "Ready. Point camera at PHOTO.";
+
 }
 
 
@@ -528,12 +721,23 @@ async function loadReferencePhotos(){
 
 async function startScanner(){
 
+    /*
+       Don't start if already running.
+    */
+
     if(
         scannerRunning ||
         videoPlaying
     ){
+
         return;
+
     }
+
+
+    /*
+       Check OpenCV.
+    */
 
     if(
         typeof cv==="undefined" ||
@@ -544,20 +748,29 @@ async function startScanner(){
             "Please wait for OpenCV to finish loading.";
 
         return;
+
     }
+
 
     try{
 
         startButton.disabled=true;
 
+
         statusText.innerText =
             "Starting rear camera...";
+
+
+        /*
+           Open rear camera.
+        */
 
         const stream =
             await navigator.mediaDevices
             .getUserMedia({
 
                 video:{
+
                     facingMode:{
                         ideal:"environment"
                     },
@@ -569,320 +782,118 @@ async function startScanner(){
                     height:{
                         ideal:720
                     }
+
                 },
 
                 audio:false
+
             });
 
-        camera.srcObject=stream;
+
+        camera.srcObject =
+            stream;
+
 
         await camera.play();
 
-        candidateId=null;
-        candidateCount=0;
 
         /*
-           Load references only once.
+           Reset candidate.
         */
 
-        if(referencePhotos.length===0){
+        candidateId=null;
 
-            await loadReferencePhotos();
-        }
+        candidateCount=0;
+
 
         /*
-           Create live ORB only once.
+           Load reference images only once.
+        */
+
+        if(
+            referencePhotos.length===0
+        ){
+
+            await loadReferencePhotos();
+
+        }
+
+
+        /*
+           Create ORB once.
         */
 
         if(!liveOrb){
 
             liveOrb =
-                new cv.ORB(1200);
+                new cv.ORB(600);
+
         }
 
+
         scannerRunning=true;
+
 
         startButton.innerText =
             "SCANNING...";
 
+
         statusText.innerText =
-            "Scanning 19 photos...";
+            "Scanning... Point camera at a PHOTO.";
+
 
         lastScanTime=0;
 
-        requestAnimationFrame(scanFrame);
+
+        requestAnimationFrame(
+            scanFrame
+        );
 
     }
     catch(error){
 
         console.error(error);
 
+
         scannerRunning=false;
+
 
         startButton.disabled=false;
 
         startButton.innerText =
             "START SCANNER";
 
-        if(error.name==="NotAllowedError"){
+
+        if(
+            error.name===
+            "NotAllowedError"
+        ){
 
             statusText.innerText =
                 "Camera permission denied. Allow Camera and try again.";
+
         }
-        else if(error.name==="NotFoundError"){
+
+        else if(
+            error.name===
+            "NotFoundError"
+        ){
 
             statusText.innerText =
                 "No camera found on this phone.";
+
         }
+
         else{
 
             statusText.innerText =
-                "Camera error: "+error.message;
+                "Camera error: "+
+                error.message;
+
         }
-    }
-}
-
-
-/* =========================================================
-   SCORE ONE REFERENCE AGAINST LIVE FRAME
-
-   Returns:
-       goodMatches
-       inliers
-       inlierRatio
-       score
-   ========================================================= */
-
-function compareReference(
-    reference,
-    liveKeypoints,
-    liveDescriptors
-){
-
-    if(
-        !reference ||
-        reference.descriptors.empty() ||
-        liveDescriptors.empty()
-    ){
-
-        return null;
-    }
-
-    const matcher =
-        new cv.BFMatcher(
-            cv.NORM_HAMMING,
-            false
-        );
-
-    const matches =
-        new cv.DMatchVectorVector();
-
-    /*
-       IMPORTANT:
-
-       Live descriptors are QUERY.
-       Reference descriptors are TRAIN.
-
-       This makes:
-         match.queryIdx = live keypoint
-         match.trainIdx = reference keypoint
-    */
-
-    matcher.knnMatch(
-        liveDescriptors,
-        reference.descriptors,
-        matches,
-        2
-    );
-
-    const goodMatches=[];
-
-    for(
-        let i=0;
-        i<matches.size();
-        i++
-    ){
-
-        const pair =
-            matches.get(i);
-
-        if(pair.size()>=2){
-
-            const first =
-                pair.get(0);
-
-            const second =
-                pair.get(1);
-
-            if(
-                first.distance <
-                MATCH_RATIO*second.distance
-            ){
-
-                goodMatches.push(first);
-            }
-        }
-    }
-
-    /*
-       Not enough matches for geometry.
-    */
-
-    if(goodMatches.length < MIN_GOOD_MATCHES){
-
-        matches.delete();
-        matcher.delete();
-
-        return {
-            goodMatches:goodMatches.length,
-            inliers:0,
-            inlierRatio:0,
-            score:0
-        };
-    }
-
-    const srcPoints=[];
-    const dstPoints=[];
-
-    /*
-       Source = LIVE
-       Destination = REFERENCE
-    */
-
-    for(
-        const match of goodMatches
-    ){
-
-        const livePoint =
-            liveKeypoints
-            .get(match.queryIdx)
-            .pt;
-
-        const referencePoint =
-            reference.keypoints
-            .get(match.trainIdx)
-            .pt;
-
-        srcPoints.push(
-            livePoint
-        );
-
-        dstPoints.push(
-            referencePoint
-        );
-    }
-
-    const srcMat =
-        cv.matFromArray(
-            srcPoints.length,
-            2,
-            cv.CV_32FC2,
-            srcPoints.flatMap(
-                p=>[p.x,p.y]
-            )
-        );
-
-    const dstMat =
-        cv.matFromArray(
-            dstPoints.length,
-            2,
-            cv.CV_32FC2,
-            dstPoints.flatMap(
-                p=>[p.x,p.y]
-            )
-        );
-
-    const inlierMask =
-        new cv.Mat();
-
-    let homography=null;
-
-    try{
-
-        homography =
-            cv.findHomography(
-                srcMat,
-                dstMat,
-                cv.RANSAC,
-                5.0,
-                inlierMask
-            );
 
     }
-    catch(error){
 
-        console.warn(
-            "Homography error:",
-            error
-        );
-    }
-
-    let inliers=0;
-
-    if(
-        homography &&
-        !homography.empty() &&
-        !inlierMask.empty()
-    ){
-
-        for(
-            let i=0;
-            i<inlierMask.rows;
-            i++
-        ){
-
-            if(
-                inlierMask.ucharPtr(i,0)[0]!==0
-            ){
-
-                inliers++;
-            }
-        }
-    }
-
-    const inlierRatio =
-        goodMatches.length>0
-            ? inliers/goodMatches.length
-            : 0;
-
-    /*
-       Combined score.
-
-       Geometry is intentionally weighted more heavily
-       than raw ORB match count.
-    */
-
-    const score =
-        (inliers*2.0) +
-        (goodMatches.length*0.5) +
-        (inlierRatio*20.0);
-
-    if(homography) homography.delete();
-
-    inlierMask.delete();
-    srcMat.delete();
-    dstMat.delete();
-    matches.delete();
-    matcher.delete();
-
-    return {
-        goodMatches:goodMatches.length,
-        inliers:inliers,
-        inlierRatio:inlierRatio,
-        score:score
-    };
-}
-
-
-/* =========================================================
-   SPECIAL PAIR CHECK
-   ========================================================= */
-
-function isSpecialPair(id1,id2){
-
-    return SPECIAL_SIMILAR_PAIRS.has(
-        id1+"|"+id2
-    );
 }
 
 
@@ -892,319 +903,370 @@ function isSpecialPair(id1,id2){
 
 function scanFrame(timestamp){
 
+    /*
+       Stop when video is playing.
+    */
+
     if(
         !scannerRunning ||
         videoPlaying
     ){
 
         return;
+
     }
+
+
+    /*
+       Limit scan frequency.
+    */
 
     if(
         timestamp-lastScanTime<
         SCAN_INTERVAL
     ){
 
-        requestAnimationFrame(scanFrame);
+        requestAnimationFrame(
+            scanFrame
+        );
+
         return;
+
     }
 
+
     lastScanTime=timestamp;
+
 
     try{
 
         const width =
             camera.videoWidth;
 
+
         const height =
             camera.videoHeight;
 
-        if(!width || !height){
 
-            requestAnimationFrame(scanFrame);
+        if(
+            !width ||
+            !height
+        ){
+
+            requestAnimationFrame(
+                scanFrame
+            );
+
             return;
+
         }
 
-        /*
-           480px processing width keeps the scanner
-           reasonably fast on phones.
-        */
+
+        /* ==============================================
+           REDUCE CAMERA FRAME TO 480px
+
+           This makes recognition faster.
+           ============================================== */
 
         const scanWidth=480;
 
-        canvas.width=scanWidth;
+
+        canvas.width=
+            scanWidth;
+
 
         canvas.height=
             Math.round(
-                height*(scanWidth/width)
+                height*
+                (scanWidth/width)
             );
 
+
         context.drawImage(
+
             camera,
+
             0,
             0,
+
             canvas.width,
             canvas.height
+
         );
+
+
+        /* ==============================================
+           OPENCV FRAME
+           ============================================== */
 
         const frame =
             cv.imread(canvas);
 
+
         const gray =
             new cv.Mat();
 
+
         cv.cvtColor(
+
             frame,
+
             gray,
+
             cv.COLOR_RGBA2GRAY
+
         );
 
-        const liveMask =
-            createRecognitionMask(
-                gray.cols,
-                gray.rows
-            );
+
+        /* ==============================================
+           DETECT ORB
+           ============================================== */
 
         const keypoints =
             new cv.KeyPointVector();
 
+
         const descriptors =
             new cv.Mat();
 
+
         liveOrb.detectAndCompute(
+
             gray,
-            liveMask,
+
+            new cv.Mat(),
+
             keypoints,
+
             descriptors
+
         );
 
-        let results=[];
 
-        if(!descriptors.empty()){
+        let bestPhoto=null;
+
+        let bestMatches=0;
+
+
+        /* ==============================================
+           COMPARE WITH REFERENCE PHOTOS
+           ============================================== */
+
+        if(
+            !descriptors.empty()
+        ){
 
             for(
                 const reference
                 of referencePhotos
             ){
 
-                const result =
-                    compareReference(
-                        reference,
-                        keypoints,
-                        descriptors
+                const matcher =
+                    new cv.BFMatcher(
+                        cv.NORM_HAMMING,
+                        false
                     );
 
-                if(result){
 
-                    results.push({
+                const matches =
+                    new cv.DMatchVectorVector();
 
-                        photo:reference,
 
-                        goodMatches:
-                            result.goodMatches,
+                matcher.knnMatch(
 
-                        inliers:
-                            result.inliers,
+                    reference.descriptors,
 
-                        inlierRatio:
-                            result.inlierRatio,
+                    descriptors,
 
-                        score:
-                            result.score
-                    });
+                    matches,
+
+                    2
+
+                );
+
+
+                let goodMatches=0;
+
+
+                for(
+                    let i=0;
+                    i<matches.size();
+                    i++
+                ){
+
+                    const pair =
+                        matches.get(i);
+
+
+                    if(
+                        pair.size()>=2
+                    ){
+
+                        const first =
+                            pair.get(0);
+
+
+                        const second =
+                            pair.get(1);
+
+
+                        if(
+                            first.distance <
+                            MATCH_RATIO*
+                            second.distance
+                        ){
+
+                            goodMatches++;
+
+                        }
+
+                    }
+
                 }
-            }
-        }
 
-        /*
-           Sort all 19 candidates by score.
-        */
 
-        results.sort(
-            (a,b)=>
-                b.score-a.score
-        );
+                /*
+                   Keep strongest photo.
+                */
 
-        const best =
-            results.length>0
-                ? results[0]
-                : null;
+                if(
+                    goodMatches>
+                    bestMatches
+                ){
 
-        const second =
-            results.length>1
-                ? results[1]
-                : null;
+                    bestMatches=
+                        goodMatches;
 
-        let accepted=false;
-        let relativeMargin=0;
+                    bestPhoto=
+                        reference;
 
-        if(best){
+                }
 
-            if(second){
 
-                relativeMargin =
-                    best.score>0
-                        ? (
-                            (best.score-second.score) /
-                            best.score
-                          )
-                        : 0;
+                matches.delete();
 
-            }
-            else{
+                matcher.delete();
 
-                relativeMargin=1;
+
+                /*
+                   Excellent match:
+                   stop checking remaining photos.
+                */
+
+                if(
+                    bestMatches>=40
+                ){
+
+                    break;
+
+                }
+
             }
 
-            const normalPass =
-                best.goodMatches>=MIN_GOOD_MATCHES &&
-                best.inliers>=MIN_RANSAC_INLIERS &&
-                best.inlierRatio>=MIN_INLIER_RATIO &&
-                relativeMargin>=MIN_RELATIVE_MARGIN;
-
-            let specialPass=true;
-
-            if(
-                second &&
-                isSpecialPair(
-                    best.photo.id,
-                    second.photo.id
-                )
-            ){
-
-                specialPass =
-                    best.inliers>=
-                        SPECIAL_MIN_INLIERS &&
-
-                    best.inlierRatio>=
-                        SPECIAL_MIN_INLIER_RATIO &&
-
-                    relativeMargin>=
-                        SPECIAL_MIN_RELATIVE_MARGIN;
-            }
-
-            accepted =
-                normalPass &&
-                specialPass;
         }
 
 
-        /* =================================================
-           TEMPORAL CONFIRMATION
-           ================================================= */
+        /* ==============================================
+           MATCH CONFIRMATION
+           ============================================== */
 
         if(
-            accepted &&
-            best
+            bestPhoto &&
+            bestMatches>=REQUIRED_MATCHES
         ){
 
             if(
                 candidateId===
-                best.photo.id
+                bestPhoto.id
             ){
 
                 candidateCount++;
+
             }
             else{
 
                 candidateId=
-                    best.photo.id;
+                    bestPhoto.id;
 
                 candidateCount=1;
+
             }
 
-            statusText.innerText =
-                best.photo.id+
-                " | ORB: "+
-                best.goodMatches+
-                " | RANSAC: "+
-                best.inliers+
-                " | Confidence: "+
-                Math.round(
-                    best.inlierRatio*100
-                )+"%"+
-                " | Confirm: "+
+
+            statusText.innerText=
+                bestPhoto.id+
+                " detected: "+
+                bestMatches+
+                " matches ("+
                 candidateCount+
                 "/"+
-                REQUIRED_CONFIRMATIONS;
+                REQUIRED_CONFIRMATIONS+
+                ")";
 
         }
+
         else{
 
-            /*
-               If the result is close between two photos,
-               do NOT guess.
-
-               This is especially important for
-               PHOTO_009 / PHOTO_010.
-            */
-
             candidateId=null;
+
             candidateCount=0;
 
-            if(
-                best &&
-                second &&
-                best.score>0 &&
-                relativeMargin<MIN_RELATIVE_MARGIN
-            ){
 
-                statusText.innerText =
-                    "Similar photos detected. "+
-                    "Move camera slightly closer.";
+            statusText.innerText=
+                "Scanning... Point camera at a photo.";
 
-            }
-            else if(best){
-
-                statusText.innerText =
-                    "Checking "+best.photo.id+
-                    " | ORB "+best.goodMatches+
-                    " | RANSAC "+best.inliers;
-
-            }
-            else{
-
-                statusText.innerText =
-                    "Scanning... Point camera at a photo.";
-            }
         }
 
 
-        /* =================================================
-           OPEN VIDEO ONLY AFTER STRONG CONFIRMATION
-           ================================================= */
+        /* ==============================================
+           OPEN VIDEO
+           ============================================== */
 
-        const now=Date.now();
+        const now =
+            Date.now();
+
 
         if(
-            accepted &&
-            best &&
+
+            bestPhoto &&
+
+            bestMatches>=
+                REQUIRED_MATCHES &&
+
             candidateCount>=
                 REQUIRED_CONFIRMATIONS &&
+
             now-lastDetectionTime>
                 DETECTION_COOLDOWN
+
         ){
 
             lastDetectionTime=now;
 
+
             recognizePhoto(
-                best.photo,
-                best.goodMatches,
-                best.inliers,
-                best.inlierRatio
+
+                bestPhoto,
+
+                bestMatches
+
             );
+
         }
 
 
-        /*
-           Release per-frame memory.
-        */
+        /* ==============================================
+           RELEASE MEMORY
+           ============================================== */
 
         frame.delete();
+
         gray.delete();
-        liveMask.delete();
+
         keypoints.delete();
+
         descriptors.delete();
+
 
     }
     catch(error){
@@ -1214,18 +1276,24 @@ function scanFrame(timestamp){
             error
         );
 
-        statusText.innerText =
-            "Scanner error. Retrying...";
     }
 
+
+    /* ==============================================
+       CONTINUE SCANNING
+       ============================================== */
 
     if(
         scannerRunning &&
         !videoPlaying
     ){
 
-        requestAnimationFrame(scanFrame);
+        requestAnimationFrame(
+            scanFrame
+        );
+
     }
+
 }
 
 
@@ -1235,23 +1303,20 @@ function scanFrame(timestamp){
 
 function recognizePhoto(
     photo,
-    goodMatches,
-    inliers,
-    inlierRatio
+    goodMatches
 ){
 
     console.log(
         "PHOTO RECOGNIZED:",
         photo.id,
-        "ORB:",
-        goodMatches,
-        "RANSAC:",
-        inliers,
-        "Ratio:",
-        inlierRatio
+        goodMatches
     );
 
-    playVideo(photo.video);
+
+    playVideo(
+        photo.video
+    );
+
 }
 
 
@@ -1261,10 +1326,22 @@ function recognizePhoto(
 
 async function playVideo(videoUrl){
 
+    /*
+       Stop scanner.
+    */
+
     videoPlaying=true;
+
     scannerRunning=false;
 
-    if(camera.srcObject){
+
+    /*
+       Stop camera completely.
+    */
+
+    if(
+        camera.srcObject
+    ){
 
         camera.srcObject
             .getTracks()
@@ -1275,17 +1352,39 @@ async function playVideo(videoUrl){
             );
 
         camera.srcObject=null;
+
     }
 
-    videoContainer.style.display="flex";
 
-    soundPanel.style.display="none";
+    /*
+       Show video container.
+    */
 
-    videoPlayer.src=videoUrl;
+    videoContainer.style.display=
+        "flex";
+
+
+    soundPanel.style.display=
+        "none";
+
+
+    /*
+       Load video.
+    */
+
+    videoPlayer.src=
+        videoUrl;
+
 
     videoPlayer.muted=false;
 
+
     videoPlayer.load();
+
+
+    /*
+       Try autoplay with sound.
+    */
 
     try{
 
@@ -1298,11 +1397,18 @@ async function playVideo(videoUrl){
             "Autoplay with sound blocked."
         );
 
+
+        /*
+           Try muted autoplay.
+        */
+
         videoPlayer.muted=true;
+
 
         try{
 
             await videoPlayer.play();
+
 
             soundPanel.style.display=
                 "block";
@@ -1315,16 +1421,23 @@ async function playVideo(videoUrl){
                 secondError
             );
 
-            statusText.innerText =
-                "Unable to play this video.";
         }
+
     }
+
+
+    /*
+       Automatically close
+       after video finishes.
+    */
 
     videoPlayer.onended=
         function(){
 
             closeVideo();
+
         };
+
 }
 
 
@@ -1336,18 +1449,24 @@ function enableSound(){
 
     videoPlayer.muted=false;
 
-    soundPanel.style.display="none";
+
+    soundPanel.style.display=
+        "none";
+
 
     videoPlayer
         .play()
         .catch(
             error=>{
+
                 console.error(
                     "Sound enable error:",
                     error
                 );
+
             }
         );
+
 }
 
 
@@ -1361,47 +1480,91 @@ function closeVideo(){
         "CLOSE BUTTON PRESSED"
     );
 
+
+    /* ==============================================
+       STOP VIDEO
+       ============================================== */
+
     videoPlayer.pause();
 
-    videoPlayer.removeAttribute("src");
+
+    videoPlayer.removeAttribute(
+        "src"
+    );
+
 
     videoPlayer.load();
 
-    videoContainer.style.display="none";
 
-    soundPanel.style.display="none";
+    /* ==============================================
+       HIDE VIDEO
+       ============================================== */
+
+    videoContainer.style.display=
+        "none";
+
+
+    soundPanel.style.display=
+        "none";
+
+
+    /* ==============================================
+       RESET VIDEO STATE
+       ============================================== */
 
     videoPlaying=false;
+
     scannerRunning=false;
 
+
+    /* ==============================================
+       RESET DETECTION
+       ============================================== */
+
     candidateId=null;
+
     candidateCount=0;
 
-    lastDetectionTime=Date.now();
+
+    /*
+       Prevent the same photo from opening
+       immediately again.
+    */
+
+    lastDetectionTime=
+        Date.now();
+
+
+    /* ==============================================
+       UPDATE UI
+       ============================================== */
 
     startButton.disabled=false;
 
     startButton.innerText=
         "START SCANNER";
 
+
     statusText.innerText=
         "Ready. Point camera at PHOTO.";
 
-    /*
-       Restart scanner after a short delay.
-    */
+
+    /* ==============================================
+       START CAMERA AGAIN
+       ============================================== */
 
     setTimeout(
+
         function(){
 
-            if(!videoPlaying){
-
-                startScanner();
-            }
+            startScanner();
 
         },
+
         500
+
     );
+
 }
 
 
@@ -1410,74 +1573,100 @@ function closeVideo(){
    ========================================================= */
 
 window.addEventListener(
+
     "load",
+
     function(){
+
+        /*
+           Get HTML elements.
+        */
 
         camera=
             document.getElementById(
                 "camera"
             );
 
+
         canvas=
             document.getElementById(
                 "canvas"
             );
 
+
         context=
-            canvas.getContext("2d");
+            canvas.getContext(
+                "2d"
+            );
+
 
         statusText=
             document.getElementById(
                 "status"
             );
 
+
         startButton=
             document.getElementById(
                 "startButton"
             );
+
 
         videoContainer=
             document.getElementById(
                 "videoContainer"
             );
 
+
         videoPlayer=
             document.getElementById(
                 "videoPlayer"
             );
+
 
         soundPanel=
             document.getElementById(
                 "soundPanel"
             );
 
+
         /*
-           Wait for OpenCV.js.
+           Wait for OpenCV.
         */
 
         const checkOpenCV=
             setInterval(
+
                 function(){
 
                     if(
+
                         typeof cv!=="undefined" &&
                         cv.Mat
+
                     ){
 
                         clearInterval(
                             checkOpenCV
                         );
 
+
                         onOpenCvReady();
+
                     }
 
                 },
+
                 300
+
             );
+
     }
+
 );
 
 </script>
 
 </body>
+
 </html>
