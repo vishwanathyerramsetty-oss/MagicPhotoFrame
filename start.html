@@ -1,202 +1,122 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#8b5e34">
+<title>Magic Photo Frame | Lord Venkateswara</title>
 
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<style>
+* {
+    box-sizing: border-box;
+}
 
-    <title>MAGIC PHOTO FRAME – Lord Venkateswara</title>
+body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    font-family: Arial, Helvetica, sans-serif;
+    background: linear-gradient(135deg, #fff8e8, #f3d7a1);
+    color: #3d2414;
+}
 
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+.card {
+    width: min(94vw, 540px);
+    background: rgba(255,255,255,0.97);
+    border-radius: 26px;
+    padding: 34px 24px 30px;
+    text-align: center;
+    box-shadow: 0 14px 40px rgba(0,0,0,0.18);
+}
 
-        html,
-        body {
-            width: 100%;
-            height: 100%;
-        }
+.icon {
+    font-size: 58px;
+    margin-bottom: 6px;
+}
 
-        body {
-            font-family: Arial, Helvetica, sans-serif;
-            background: linear-gradient(
-                135deg,
-                #fff8e7,
-                #f5dfb3
-            );
+h1 {
+    margin: 0;
+    font-size: clamp(28px, 7vw, 38px);
+    letter-spacing: 1px;
+}
 
-            display: flex;
-            justify-content: center;
-            align-items: center;
+h2 {
+    margin: 10px 0 22px;
+    font-size: clamp(21px, 5vw, 27px);
+    font-weight: 600;
+}
 
-            text-align: center;
+.subtitle {
+    font-size: 17px;
+    line-height: 1.6;
+    margin: 0 auto 24px;
+    max-width: 420px;
+}
 
-            overflow: hidden;
-        }
+.steps {
+    text-align: left;
+    margin: 0 auto 26px;
+    max-width: 390px;
+    font-size: 17px;
+    line-height: 1.8;
+}
 
-        .container {
-            width: 92%;
-            max-width: 600px;
+.button {
+    display: block;
+    width: 100%;
+    text-decoration: none;
+    background: #8b5e34;
+    color: white;
+    padding: 17px 20px;
+    border-radius: 15px;
+    font-size: 20px;
+    font-weight: 700;
+    box-shadow: 0 5px 14px rgba(0,0,0,0.16);
+}
 
-            background: rgba(255, 255, 255, 0.96);
+.button:active {
+    transform: scale(0.98);
+}
 
-            border-radius: 25px;
-
-            padding: 35px 25px 40px;
-
-            box-shadow:
-                0 10px 35px rgba(0, 0, 0, 0.20);
-        }
-
-        .om {
-            font-size: 65px;
-            margin-bottom: 10px;
-        }
-
-        h1 {
-            font-size: 28px;
-            color: #7a3f00;
-            margin-bottom: 12px;
-            line-height: 1.25;
-        }
-
-        h2 {
-            font-size: 21px;
-            color: #a05a00;
-            margin-bottom: 25px;
-        }
-
-        .message {
-            font-size: 17px;
-            line-height: 1.6;
-            color: #444;
-
-            margin-bottom: 30px;
-        }
-
-        .button {
-            display: inline-block;
-
-            width: 90%;
-            max-width: 420px;
-
-            padding: 18px 25px;
-
-            background: #8b4513;
-            color: white;
-
-            text-decoration: none;
-
-            font-size: 20px;
-            font-weight: bold;
-
-            border-radius: 12px;
-
-            box-shadow:
-                0 5px 12px rgba(0, 0, 0, 0.25);
-
-            transition: transform 0.15s,
-                        background 0.15s;
-        }
-
-        .button:hover {
-            background: #6f350f;
-            transform: scale(1.03);
-        }
-
-        .button:active {
-            transform: scale(0.97);
-        }
-
-        .instruction {
-            margin-top: 25px;
-
-            font-size: 15px;
-            color: #666;
-
-            line-height: 1.5;
-        }
-
-        .footer {
-            margin-top: 25px;
-
-            font-size: 13px;
-            color: #888;
-        }
-
-        @media (max-width: 480px) {
-
-            .container {
-                padding: 28px 18px 30px;
-                border-radius: 20px;
-            }
-
-            .om {
-                font-size: 50px;
-            }
-
-            h1 {
-                font-size: 23px;
-            }
-
-            h2 {
-                font-size: 18px;
-            }
-
-            .message {
-                font-size: 15px;
-            }
-
-            .button {
-                font-size: 18px;
-                padding: 17px 15px;
-            }
-        }
-    </style>
+.note {
+    margin-top: 20px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #6d5a49;
+}
+</style>
 </head>
 
 <body>
+<main class="card">
 
-    <div class="container">
+    <div class="icon">🙏</div>
 
-        <div class="om">🕉️</div>
+    <h1>MAGIC PHOTO FRAME</h1>
 
-        <h1>
-            MAGIC PHOTO FRAME
-        </h1>
+    <h2>Lord Venkateswara</h2>
 
-        <h2>
-            Lord Venkateswara
-        </h2>
+    <p class="subtitle">
+        Bring your sacred photo to life with an interactive video experience.
+    </p>
 
-        <div class="message">
-            Scan the special photo using your mobile camera
-            and experience the magic.
-        </div>
-
-        <!-- IMPORTANT:
-             This explicitly opens index.html -->
-        <a
-            class="button"
-            href="index.html">
-            OPEN MAGIC SCANNER
-        </a>
-
-        <div class="instruction">
-            📱 Tap the button above<br>
-            📷 Allow camera permission when asked<br>
-            🖼️ Point the camera at the Magic Photo
-        </div>
-
-        <div class="footer">
-            Magic Photo Frame © 2026
-        </div>
-
+    <div class="steps">
+        📱 <strong>Step 1:</strong> Open the Magic Scanner<br>
+        📷 <strong>Step 2:</strong> Point your camera at the photo<br>
+        🎬 <strong>Step 3:</strong> Watch the video come alive
     </div>
 
+    <a class="button" href="./">
+        OPEN MAGIC SCANNER
+    </a>
+
+    <div class="note">
+        Internet connection is required for video playback.
+    </div>
+
+</main>
 </body>
 </html>
