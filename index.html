@@ -1,10 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
 <meta charset="UTF-8">
-<meta name="viewport"
-      content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
 <title>Magic Photo Frame - Lord Venkateswara</title>
 
@@ -44,8 +42,9 @@ h1{
 
 #status{
     margin:10px 12px;
-    min-height:28px;
-    font-size:17px;
+    min-height:42px;
+    font-size:16px;
+    line-height:1.35;
 }
 
 #startButton{
@@ -54,10 +53,12 @@ h1{
     border:0;
     border-radius:9px;
     cursor:pointer;
+    font-weight:bold;
 }
 
 #startButton:disabled{
     opacity:.5;
+    cursor:not-allowed;
 }
 
 #videoContainer{
@@ -94,15 +95,9 @@ h1{
     font-size:20px;
     font-weight:bold;
     cursor:pointer;
-    box-shadow:0 3px 10px rgba(0,0,0,.7);
     display:flex;
     align-items:center;
     justify-content:center;
-}
-
-#closeVideo:active{
-    transform:scale(.94);
-    background:#333;
 }
 
 #soundPanel{
@@ -131,17 +126,11 @@ h1{
 
 <h1>MAGIC PHOTO FRAME</h1>
 
-<button id="startButton"
-        onclick="startScanner()"
-        disabled>
-    LOADING...
+<button id="startButton" disabled>
+    LOADING OPENCV...
 </button>
 
-<video id="camera"
-       autoplay
-       playsinline
-       muted>
-</video>
+<video id="camera" autoplay playsinline muted></video>
 
 <canvas id="canvas"></canvas>
 
@@ -151,8 +140,7 @@ h1{
 
 <div id="videoContainer">
 
-    <button id="closeVideo"
-            onclick="closeVideo()">
+    <button id="closeVideo" onclick="closeVideo()">
         ✕ CLOSE
     </button>
 
@@ -163,29 +151,21 @@ h1{
     </video>
 
     <div id="soundPanel">
-        <button id="playSoundButton"
-                onclick="enableSound()">
+        <button id="playSoundButton" onclick="enableSound()">
             🔊 TAP FOR SOUND
         </button>
     </div>
 
 </div>
 
-
 <script>
 
 /* =========================================================
-   GITHUB VIDEO LOCATION
+   PROJECT SETTINGS
    ========================================================= */
 
 const GITHUB_BASE =
     "https://vishwanathyerramsetty-oss.github.io/MagicPhotoFrame/";
-
-
-/* =========================================================
-   LORD VENKATESWARA PROJECT
-   19 PHOTOS / 19 VIDEOS
-   ========================================================= */
 
 const TOTAL_PHOTOS = 19;
 
@@ -194,21 +174,18 @@ const TOTAL_PHOTOS = 19;
    CREATE PHOTO / VIDEO LIST
    ========================================================= */
 
-const photoVideos =
-    Array.from(
-        {length:TOTAL_PHOTOS},
-        (_,i)=>{
+const photoVideos = Array.from(
+    {length: TOTAL_PHOTOS},
+    (_, i) => {
+        const n = String(i + 1).padStart(3, "0");
 
-            const n =
-                String(i+1).padStart(3,"0");
-
-            return {
-                id:"PHOTO_"+n,
-                image:"photos/PHOTO_"+n+".jpg",
-                video:GITHUB_BASE+"PHOTO_"+n+".mp4"
-            };
-        }
-    );
+        return {
+            id: "PHOTO_" + n,
+            image: "photos/PHOTO_" + n + ".jpg",
+            video: GITHUB_BASE + "PHOTO_" + n + ".mp4"
+        };
+    }
+);
 
 
 /* =========================================================
@@ -218,89 +195,55 @@ const photoVideos =
 let camera;
 let canvas;
 let context;
-
 let statusText;
 let startButton;
-
 let videoContainer;
 let videoPlayer;
 let soundPanel;
 
 
 /* =========================================================
-   OPENCV
+   OPENCV / SCANNER STATE
    ========================================================= */
 
-let referencePhotos=[];
-let liveOrb=null;
+let referencePhotos = [];
+let liveOrb = null;
 
+let scannerRunning = false;
+let videoPlaying = false;
+let cvReady = false;
 
-/* =========================================================
-   SCANNER STATE
-   ========================================================= */
+let lastScanTime = 0;
+let lastDetectionTime = 0;
 
-let scannerRunning=false;
-let videoPlaying=false;
-
-
-/* =========================================================
-   DETECTION STATE
-   ========================================================= */
-
-let lastDetectionTime=0;
-let lastScanTime=0;
-
-let candidateId=null;
-let candidateCount=0;
+let candidateId = null;
+let candidateCount = 0;
 
 
 /* =========================================================
    RECOGNITION SETTINGS
 
-   These are deliberately stricter than the old
-   "good matches >= 22" system.
-
-   A candidate must pass:
-   1. Lowe ratio
-   2. RANSAC geometric verification
-   3. Inlier ratio
-   4. Best-vs-second-best margin
-   5. Consecutive frame confirmation
+   These are intentionally more forgiving than the previous
+   version. We can make them stricter after the scanner works.
    ========================================================= */
 
-const MATCH_RATIO = 0.70;
+const ORB_FEATURES = 1000;
 
-const MIN_GOOD_MATCHES = 18;
+const MATCH_RATIO = 0.75;
 
-const MIN_RANSAC_INLIERS = 10;
+const MIN_GOOD_MATCHES = 8;
 
-const MIN_INLIER_RATIO = 0.30;
+const MIN_RANSAC_INLIERS = 5;
 
-const MIN_RELATIVE_MARGIN = 0.20;
+const MIN_INLIER_RATIO = 0.20;
+
+const MIN_RELATIVE_MARGIN = 0.08;
 
 const REQUIRED_CONFIRMATIONS = 2;
 
-const SCAN_INTERVAL = 150;
+const SCAN_INTERVAL = 250;
 
 const DETECTION_COOLDOWN = 4000;
-
-
-/*
-   Special stricter rule for the closest candidates.
-
-   We already know PHOTO_009 and PHOTO_010 can
-   look very similar. The same mechanism can
-   be expanded later if another pair is found.
-*/
-
-const SPECIAL_SIMILAR_PAIRS = new Set([
-    "PHOTO_009|PHOTO_010",
-    "PHOTO_010|PHOTO_009"
-]);
-
-const SPECIAL_MIN_INLIERS = 15;
-const SPECIAL_MIN_INLIER_RATIO = 0.40;
-const SPECIAL_MIN_RELATIVE_MARGIN = 0.25;
 
 
 /* =========================================================
@@ -309,10 +252,12 @@ const SPECIAL_MIN_RELATIVE_MARGIN = 0.25;
 
 function onOpenCvReady(){
 
+    cvReady = true;
+
     statusText.innerText =
         "OpenCV ready. Press START SCANNER.";
 
-    startButton.disabled=false;
+    startButton.disabled = false;
 
     startButton.innerText =
         "START SCANNER";
@@ -320,45 +265,69 @@ function onOpenCvReady(){
 
 
 /* =========================================================
-   CREATE BORDER-REDUCING MASK
+   WAIT FOR OPENCV
 
-   Your 19 Lord Venkateswara images share a lot of
-   decorative border information.
-
-   We keep the main image and title area but reduce
-   the influence of the outer border.
+   Some phones load OpenCV differently, so we use both the
+   runtime callback and a small safety check.
    ========================================================= */
 
-function createRecognitionMask(width,height){
+function waitForOpenCV(){
 
-    const mask =
-        new cv.Mat(
-            height,
-            width,
-            cv.CV_8UC1,
-            new cv.Scalar(0)
-        );
+    const timer = setInterval(function(){
 
-    const x =
-        Math.round(width*0.08);
+        if(
+            typeof cv !== "undefined" &&
+            cv.Mat &&
+            cv.ORB
+        ){
+            clearInterval(timer);
 
-    const y =
-        Math.round(height*0.05);
+            if(!cvReady){
+                onOpenCvReady();
+            }
+        }
 
-    const w =
-        Math.round(width*0.84);
+    }, 250);
 
-    const h =
-        Math.round(height*0.89);
+    setTimeout(function(){
 
-    const white =
-        new cv.Scalar(255);
+        if(!cvReady){
+
+            statusText.innerText =
+                "OpenCV is taking too long to load. Check internet and refresh.";
+        }
+
+    }, 15000);
+}
+
+
+/* =========================================================
+   CREATE RECOGNITION MASK
+
+   Ignore only a small outer border. Do not remove too much
+   of the actual Venkateswara image.
+   ========================================================= */
+
+function createRecognitionMask(width, height){
+
+    const mask = new cv.Mat(
+        height,
+        width,
+        cv.CV_8UC1,
+        new cv.Scalar(0)
+    );
+
+    const x = Math.round(width * 0.04);
+    const y = Math.round(height * 0.03);
+
+    const w = Math.round(width * 0.92);
+    const h = Math.round(height * 0.94);
 
     cv.rectangle(
         mask,
-        new cv.Point(x,y),
-        new cv.Point(x+w,y+h),
-        white,
+        new cv.Point(x, y),
+        new cv.Point(x + w, y + h),
+        new cv.Scalar(255),
         -1
     );
 
@@ -372,127 +341,158 @@ function createRecognitionMask(width,height){
 
 async function loadReferencePhoto(photo){
 
-    return new Promise(
-        (resolve,reject)=>{
+    return new Promise(function(resolve, reject){
 
-            const img =
-                new Image();
+        const img = new Image();
 
-            img.onload=function(){
+        img.onload = function(){
 
-                try{
+            try{
 
-                    const targetWidth=480;
+                const targetWidth = 480;
 
-                    const scale =
-                        targetWidth/img.width;
+                const scale =
+                    targetWidth / img.naturalWidth;
 
-                    const refCanvas =
-                        document.createElement("canvas");
+                const refCanvas =
+                    document.createElement("canvas");
 
-                    refCanvas.width =
-                        targetWidth;
+                refCanvas.width = targetWidth;
 
-                    refCanvas.height =
+                refCanvas.height =
+                    Math.max(
+                        1,
                         Math.round(
-                            img.height*scale
-                        );
-
-                    const ctx =
-                        refCanvas.getContext("2d");
-
-                    ctx.drawImage(
-                        img,
-                        0,
-                        0,
-                        refCanvas.width,
-                        refCanvas.height
+                            img.naturalHeight * scale
+                        )
                     );
 
-                    const mat =
-                        cv.imread(refCanvas);
+                const ctx =
+                    refCanvas.getContext("2d");
 
-                    const gray =
-                        new cv.Mat();
+                ctx.drawImage(
+                    img,
+                    0,
+                    0,
+                    refCanvas.width,
+                    refCanvas.height
+                );
 
-                    cv.cvtColor(
-                        mat,
-                        gray,
-                        cv.COLOR_RGBA2GRAY
+                const mat =
+                    cv.imread(refCanvas);
+
+                const gray =
+                    new cv.Mat();
+
+                cv.cvtColor(
+                    mat,
+                    gray,
+                    cv.COLOR_RGBA2GRAY
+                );
+
+                const mask =
+                    createRecognitionMask(
+                        gray.cols,
+                        gray.rows
                     );
 
-                    const mask =
-                        createRecognitionMask(
-                            gray.cols,
-                            gray.rows
-                        );
+                const orb =
+                    new cv.ORB(ORB_FEATURES);
 
-                    const orb =
-                        new cv.ORB(1200);
+                const keypoints =
+                    new cv.KeyPointVector();
 
-                    const keypoints =
-                        new cv.KeyPointVector();
+                const descriptors =
+                    new cv.Mat();
 
-                    const descriptors =
-                        new cv.Mat();
+                orb.detectAndCompute(
+                    gray,
+                    mask,
+                    keypoints,
+                    descriptors
+                );
 
-                    orb.detectAndCompute(
-                        gray,
-                        mask,
-                        keypoints,
-                        descriptors
-                    );
+                const descriptorCount =
+                    descriptors.empty()
+                        ? 0
+                        : descriptors.rows;
 
-                    if(descriptors.empty()){
+                console.log(
+                    photo.id,
+                    "reference keypoints:",
+                    keypoints.size(),
+                    "descriptors:",
+                    descriptorCount
+                );
 
-                        console.warn(
-                            "No descriptors:",
-                            photo.id
-                        );
-                    }
-
-                    referencePhotos.push({
-
-                        id:photo.id,
-
-                        video:photo.video,
-
-                        keypoints:keypoints,
-
-                        descriptors:descriptors,
-
-                        width:gray.cols,
-
-                        height:gray.rows
-                    });
+                if(descriptors.empty()){
 
                     mat.delete();
                     gray.delete();
                     mask.delete();
                     orb.delete();
+                    keypoints.delete();
+                    descriptors.delete();
 
-                    resolve();
+                    reject(
+                        new Error(
+                            photo.id +
+                            " has no ORB descriptors."
+                        )
+                    );
 
+                    return;
                 }
-                catch(error){
 
-                    reject(error);
-                }
-            };
+                referencePhotos.push({
 
-            img.onerror=function(){
+                    id: photo.id,
 
-                reject(
-                    new Error(
-                        "Cannot load "+
-                        photo.image
-                    )
-                );
-            };
+                    video: photo.video,
 
-            img.src=photo.image;
-        }
-    );
+                    keypoints: keypoints,
+
+                    descriptors: descriptors,
+
+                    width: gray.cols,
+
+                    height: gray.rows
+
+                });
+
+                mat.delete();
+                gray.delete();
+                mask.delete();
+                orb.delete();
+
+                resolve();
+
+            }
+            catch(error){
+
+                reject(error);
+            }
+        };
+
+        img.onerror = function(){
+
+            reject(
+                new Error(
+                    "Cannot load " +
+                    photo.image +
+                    " from GitHub Pages."
+                )
+            );
+        };
+
+        /*
+           Cache-busting query prevents an old JPG from being
+           reused by the browser after you replace a photo.
+        */
+        img.src =
+            photo.image +
+            "?v=20261001";
+    });
 }
 
 
@@ -502,23 +502,33 @@ async function loadReferencePhoto(photo){
 
 async function loadReferencePhotos(){
 
-    statusText.innerText =
-        "Loading 19 reference photos...";
-
-    referencePhotos=[];
+    referencePhotos = [];
 
     for(
-        const photo of photoVideos
+        let i = 0;
+        i < photoVideos.length;
+        i++
     ){
 
+        const photo = photoVideos[i];
+
         statusText.innerText =
-            "Loading "+photo.id+"...";
+            "Loading " +
+            photo.id +
+            " (" +
+            (i + 1) +
+            "/19)...";
 
         await loadReferencePhoto(photo);
     }
 
     statusText.innerText =
-        "Ready. Point camera at a PHOTO.";
+        "All 19 photos loaded. Ready to scan.";
+
+    console.log(
+        "REFERENCE PHOTOS LOADED:",
+        referencePhotos.length
+    );
 }
 
 
@@ -528,129 +538,126 @@ async function loadReferencePhotos(){
 
 async function startScanner(){
 
-    if(
-        scannerRunning ||
-        videoPlaying
-    ){
+    if(scannerRunning || videoPlaying){
+        return;
+    }
+
+    if(!cvReady){
+
+        statusText.innerText =
+            "OpenCV is not ready yet.";
+
         return;
     }
 
     if(
-        typeof cv==="undefined" ||
-        !cv.Mat
+        !navigator.mediaDevices ||
+        !navigator.mediaDevices.getUserMedia
     ){
 
         statusText.innerText =
-            "Please wait for OpenCV to finish loading.";
+            "Camera is not available in this browser.";
 
         return;
     }
 
     try{
 
-        startButton.disabled=true;
+        startButton.disabled = true;
 
         statusText.innerText =
-            "Starting rear camera...";
+            "Requesting camera permission...";
 
         const stream =
-            await navigator.mediaDevices
-            .getUserMedia({
+            await navigator.mediaDevices.getUserMedia({
 
-                video:{
-                    facingMode:{
-                        ideal:"environment"
+                video: {
+                    facingMode: {
+                        ideal: "environment"
                     },
 
-                    width:{
-                        ideal:1280
+                    width: {
+                        ideal: 1280
                     },
 
-                    height:{
-                        ideal:720
+                    height: {
+                        ideal: 720
                     }
                 },
 
-                audio:false
+                audio: false
+
             });
 
-        camera.srcObject=stream;
+        camera.srcObject = stream;
 
         await camera.play();
 
-        candidateId=null;
-        candidateCount=0;
+        candidateId = null;
+        candidateCount = 0;
 
-        /*
-           Load references only once.
-        */
-
-        if(referencePhotos.length===0){
+        if(referencePhotos.length === 0){
 
             await loadReferencePhotos();
         }
 
-        /*
-           Create live ORB only once.
-        */
-
         if(!liveOrb){
 
             liveOrb =
-                new cv.ORB(1200);
+                new cv.ORB(ORB_FEATURES);
         }
 
-        scannerRunning=true;
+        scannerRunning = true;
 
         startButton.innerText =
             "SCANNING...";
 
         statusText.innerText =
-            "Scanning 19 photos...";
+            "Scanning 19 photos. Point camera at PHOTO_001...PHOTO_019.";
 
-        lastScanTime=0;
+        lastScanTime = 0;
 
         requestAnimationFrame(scanFrame);
 
     }
     catch(error){
 
-        console.error(error);
+        console.error(
+            "START SCANNER ERROR:",
+            error
+        );
 
-        scannerRunning=false;
+        scannerRunning = false;
 
-        startButton.disabled=false;
+        startButton.disabled = false;
 
         startButton.innerText =
             "START SCANNER";
 
-        if(error.name==="NotAllowedError"){
+        if(error.name === "NotAllowedError"){
 
             statusText.innerText =
-                "Camera permission denied. Allow Camera and try again.";
+                "Camera permission denied. Allow camera access and try again.";
+
         }
-        else if(error.name==="NotFoundError"){
+        else if(error.name === "NotFoundError"){
 
             statusText.innerText =
                 "No camera found on this phone.";
+
         }
         else{
 
             statusText.innerText =
-                "Camera error: "+error.message;
+                "Scanner error: " +
+                error.message;
         }
     }
 }
 
 
 /* =========================================================
-   SCORE ONE REFERENCE AGAINST LIVE FRAME
-
-   Returns:
-       goodMatches
-       inliers
-       inlierRatio
-       score
+   COMPARE LIVE FRAME WITH ONE REFERENCE
    ========================================================= */
 
 function compareReference(
@@ -677,17 +684,6 @@ function compareReference(
     const matches =
         new cv.DMatchVectorVector();
 
-    /*
-       IMPORTANT:
-
-       Live descriptors are QUERY.
-       Reference descriptors are TRAIN.
-
-       This makes:
-         match.queryIdx = live keypoint
-         match.trainIdx = reference keypoint
-    */
-
     matcher.knnMatch(
         liveDescriptors,
         reference.descriptors,
@@ -695,18 +691,18 @@ function compareReference(
         2
     );
 
-    const goodMatches=[];
+    const goodMatches = [];
 
     for(
-        let i=0;
-        i<matches.size();
+        let i = 0;
+        i < matches.size();
         i++
     ){
 
         const pair =
             matches.get(i);
 
-        if(pair.size()>=2){
+        if(pair.size() >= 2){
 
             const first =
                 pair.get(0);
@@ -716,7 +712,7 @@ function compareReference(
 
             if(
                 first.distance <
-                MATCH_RATIO*second.distance
+                MATCH_RATIO * second.distance
             ){
 
                 goodMatches.push(first);
@@ -724,30 +720,23 @@ function compareReference(
         }
     }
 
-    /*
-       Not enough matches for geometry.
-    */
-
     if(goodMatches.length < MIN_GOOD_MATCHES){
 
         matches.delete();
         matcher.delete();
 
         return {
-            goodMatches:goodMatches.length,
-            inliers:0,
-            inlierRatio:0,
-            score:0
+
+            goodMatches: goodMatches.length,
+            inliers: 0,
+            inlierRatio: 0,
+            score: 0
+
         };
     }
 
-    const srcPoints=[];
-    const dstPoints=[];
-
-    /*
-       Source = LIVE
-       Destination = REFERENCE
-    */
+    const srcPoints = [];
+    const dstPoints = [];
 
     for(
         const match of goodMatches
@@ -755,21 +744,16 @@ function compareReference(
 
         const livePoint =
             liveKeypoints
-            .get(match.queryIdx)
-            .pt;
+                .get(match.queryIdx)
+                .pt;
 
         const referencePoint =
             reference.keypoints
-            .get(match.trainIdx)
-            .pt;
+                .get(match.trainIdx)
+                .pt;
 
-        srcPoints.push(
-            livePoint
-        );
-
-        dstPoints.push(
-            referencePoint
-        );
+        srcPoints.push(livePoint);
+        dstPoints.push(referencePoint);
     }
 
     const srcMat =
@@ -778,7 +762,7 @@ function compareReference(
             2,
             cv.CV_32FC2,
             srcPoints.flatMap(
-                p=>[p.x,p.y]
+                p => [p.x, p.y]
             )
         );
 
@@ -788,14 +772,14 @@ function compareReference(
             2,
             cv.CV_32FC2,
             dstPoints.flatMap(
-                p=>[p.x,p.y]
+                p => [p.x, p.y]
             )
         );
 
     const inlierMask =
         new cv.Mat();
 
-    let homography=null;
+    let homography = null;
 
     try{
 
@@ -804,7 +788,7 @@ function compareReference(
                 srcMat,
                 dstMat,
                 cv.RANSAC,
-                5.0,
+                7.0,
                 inlierMask
             );
 
@@ -817,7 +801,7 @@ function compareReference(
         );
     }
 
-    let inliers=0;
+    let inliers = 0;
 
     if(
         homography &&
@@ -826,13 +810,13 @@ function compareReference(
     ){
 
         for(
-            let i=0;
-            i<inlierMask.rows;
+            let i = 0;
+            i < inlierMask.rows;
             i++
         ){
 
             if(
-                inlierMask.ucharPtr(i,0)[0]!==0
+                inlierMask.ucharPtr(i,0)[0] !== 0
             ){
 
                 inliers++;
@@ -841,23 +825,22 @@ function compareReference(
     }
 
     const inlierRatio =
-        goodMatches.length>0
-            ? inliers/goodMatches.length
+        goodMatches.length > 0
+            ? inliers / goodMatches.length
             : 0;
 
     /*
-       Combined score.
-
-       Geometry is intentionally weighted more heavily
-       than raw ORB match count.
+       Geometry gets more weight than raw ORB count.
     */
 
     const score =
-        (inliers*2.0) +
-        (goodMatches.length*0.5) +
-        (inlierRatio*20.0);
+        (inliers * 2.0) +
+        (goodMatches.length * 0.5) +
+        (inlierRatio * 20.0);
 
-    if(homography) homography.delete();
+    if(homography){
+        homography.delete();
+    }
 
     inlierMask.delete();
     srcMat.delete();
@@ -866,28 +849,21 @@ function compareReference(
     matcher.delete();
 
     return {
-        goodMatches:goodMatches.length,
-        inliers:inliers,
-        inlierRatio:inlierRatio,
-        score:score
+
+        goodMatches: goodMatches.length,
+
+        inliers: inliers,
+
+        inlierRatio: inlierRatio,
+
+        score: score
+
     };
 }
 
 
 /* =========================================================
-   SPECIAL PAIR CHECK
-   ========================================================= */
-
-function isSpecialPair(id1,id2){
-
-    return SPECIAL_SIMILAR_PAIRS.has(
-        id1+"|"+id2
-    );
-}
-
-
-/* =========================================================
-   SCAN CAMERA FRAME
+   SCAN ONE CAMERA FRAME
    ========================================================= */
 
 function scanFrame(timestamp){
@@ -901,15 +877,16 @@ function scanFrame(timestamp){
     }
 
     if(
-        timestamp-lastScanTime<
+        timestamp - lastScanTime <
         SCAN_INTERVAL
     ){
 
         requestAnimationFrame(scanFrame);
+
         return;
     }
 
-    lastScanTime=timestamp;
+    lastScanTime = timestamp;
 
     try{
 
@@ -922,21 +899,18 @@ function scanFrame(timestamp){
         if(!width || !height){
 
             requestAnimationFrame(scanFrame);
+
             return;
         }
 
-        /*
-           480px processing width keeps the scanner
-           reasonably fast on phones.
-        */
+        const scanWidth = 480;
 
-        const scanWidth=480;
+        canvas.width = scanWidth;
 
-        canvas.width=scanWidth;
-
-        canvas.height=
+        canvas.height =
             Math.round(
-                height*(scanWidth/width)
+                height *
+                (scanWidth / width)
             );
 
         context.drawImage(
@@ -978,13 +952,12 @@ function scanFrame(timestamp){
             descriptors
         );
 
-        let results=[];
+        let results = [];
 
         if(!descriptors.empty()){
 
             for(
-                const reference
-                of referencePhotos
+                const reference of referencePhotos
             ){
 
                 const result =
@@ -998,7 +971,7 @@ function scanFrame(timestamp){
 
                     results.push({
 
-                        photo:reference,
+                        photo: reference,
 
                         goodMatches:
                             result.goodMatches,
@@ -1011,181 +984,150 @@ function scanFrame(timestamp){
 
                         score:
                             result.score
+
                     });
                 }
             }
         }
 
-        /*
-           Sort all 19 candidates by score.
-        */
-
         results.sort(
-            (a,b)=>
-                b.score-a.score
+            (a,b) =>
+                b.score - a.score
         );
 
         const best =
-            results.length>0
+            results.length > 0
                 ? results[0]
                 : null;
 
         const second =
-            results.length>1
+            results.length > 1
                 ? results[1]
                 : null;
 
-        let accepted=false;
-        let relativeMargin=0;
+        let relativeMargin = 0;
 
         if(best){
 
-            if(second){
+            if(second && best.score > 0){
 
                 relativeMargin =
-                    best.score>0
-                        ? (
-                            (best.score-second.score) /
-                            best.score
-                          )
-                        : 0;
+                    (
+                        best.score -
+                        second.score
+                    ) /
+                    best.score;
 
             }
             else{
 
-                relativeMargin=1;
+                relativeMargin = 1;
             }
+        }
 
-            const normalPass =
-                best.goodMatches>=MIN_GOOD_MATCHES &&
-                best.inliers>=MIN_RANSAC_INLIERS &&
-                best.inlierRatio>=MIN_INLIER_RATIO &&
-                relativeMargin>=MIN_RELATIVE_MARGIN;
+        /*
+           A candidate is accepted only when:
+           - enough ORB matches
+           - enough RANSAC inliers
+           - reasonable geometry
+           - best result is separated from second result
+        */
 
-            let specialPass=true;
+        let accepted = false;
 
-            if(
-                second &&
-                isSpecialPair(
-                    best.photo.id,
-                    second.photo.id
-                )
-            ){
-
-                specialPass =
-                    best.inliers>=
-                        SPECIAL_MIN_INLIERS &&
-
-                    best.inlierRatio>=
-                        SPECIAL_MIN_INLIER_RATIO &&
-
-                    relativeMargin>=
-                        SPECIAL_MIN_RELATIVE_MARGIN;
-            }
+        if(best){
 
             accepted =
-                normalPass &&
-                specialPass;
+                best.goodMatches >= MIN_GOOD_MATCHES &&
+                best.inliers >= MIN_RANSAC_INLIERS &&
+                best.inlierRatio >= MIN_INLIER_RATIO &&
+                relativeMargin >= MIN_RELATIVE_MARGIN;
         }
 
 
-        /* =================================================
+        /* =====================================================
+           DEBUG STATUS
+
+           This is deliberately visible so we can tune the
+           scanner using real camera values.
+           ===================================================== */
+
+        if(best){
+
+            statusText.innerText =
+                "Best: " +
+                best.photo.id +
+                " | ORB: " +
+                best.goodMatches +
+                " | RANSAC: " +
+                best.inliers +
+                " | Ratio: " +
+                Math.round(
+                    best.inlierRatio * 100
+                ) +
+                "% | Margin: " +
+                Math.round(
+                    relativeMargin * 100
+                ) +
+                "%";
+
+        }
+        else{
+
+            statusText.innerText =
+                "Scanning... Point camera at a photo.";
+        }
+
+
+        /* =====================================================
            TEMPORAL CONFIRMATION
-           ================================================= */
+           ===================================================== */
 
-        if(
-            accepted &&
-            best
-        ){
+        if(accepted && best){
 
-            if(
-                candidateId===
-                best.photo.id
-            ){
+            if(candidateId === best.photo.id){
 
                 candidateCount++;
+
             }
             else{
 
-                candidateId=
+                candidateId =
                     best.photo.id;
 
-                candidateCount=1;
+                candidateCount = 1;
             }
 
-            statusText.innerText =
-                best.photo.id+
-                " | ORB: "+
-                best.goodMatches+
-                " | RANSAC: "+
-                best.inliers+
-                " | Confidence: "+
-                Math.round(
-                    best.inlierRatio*100
-                )+"%"+
-                " | Confirm: "+
-                candidateCount+
-                "/"+
+            statusText.innerText +=
+                " | Confirm: " +
+                candidateCount +
+                "/" +
                 REQUIRED_CONFIRMATIONS;
 
         }
         else{
 
-            /*
-               If the result is close between two photos,
-               do NOT guess.
-
-               This is especially important for
-               PHOTO_009 / PHOTO_010.
-            */
-
-            candidateId=null;
-            candidateCount=0;
-
-            if(
-                best &&
-                second &&
-                best.score>0 &&
-                relativeMargin<MIN_RELATIVE_MARGIN
-            ){
-
-                statusText.innerText =
-                    "Similar photos detected. "+
-                    "Move camera slightly closer.";
-
-            }
-            else if(best){
-
-                statusText.innerText =
-                    "Checking "+best.photo.id+
-                    " | ORB "+best.goodMatches+
-                    " | RANSAC "+best.inliers;
-
-            }
-            else{
-
-                statusText.innerText =
-                    "Scanning... Point camera at a photo.";
-            }
+            candidateId = null;
+            candidateCount = 0;
         }
 
 
-        /* =================================================
-           OPEN VIDEO ONLY AFTER STRONG CONFIRMATION
-           ================================================= */
+        /* =====================================================
+           PLAY VIDEO
+           ===================================================== */
 
-        const now=Date.now();
+        const now = Date.now();
 
         if(
             accepted &&
             best &&
-            candidateCount>=
+            candidateCount >=
                 REQUIRED_CONFIRMATIONS &&
-            now-lastDetectionTime>
+            now - lastDetectionTime >
                 DETECTION_COOLDOWN
         ){
 
-            lastDetectionTime=now;
+            lastDetectionTime = now;
 
             recognizePhoto(
                 best.photo,
@@ -1195,10 +1137,6 @@ function scanFrame(timestamp){
             );
         }
 
-
-        /*
-           Release per-frame memory.
-        */
 
         frame.delete();
         gray.delete();
@@ -1217,7 +1155,6 @@ function scanFrame(timestamp){
         statusText.innerText =
             "Scanner error. Retrying...";
     }
-
 
     if(
         scannerRunning &&
@@ -1251,6 +1188,11 @@ function recognizePhoto(
         inlierRatio
     );
 
+    statusText.innerText =
+        "FOUND " +
+        photo.id +
+        " — PLAYING VIDEO";
+
     playVideo(photo.video);
 }
 
@@ -1261,29 +1203,27 @@ function recognizePhoto(
 
 async function playVideo(videoUrl){
 
-    videoPlaying=true;
-    scannerRunning=false;
+    videoPlaying = true;
+    scannerRunning = false;
 
     if(camera.srcObject){
 
         camera.srcObject
             .getTracks()
             .forEach(
-                track=>{
-                    track.stop();
-                }
+                track => track.stop()
             );
 
-        camera.srcObject=null;
+        camera.srcObject = null;
     }
 
-    videoContainer.style.display="flex";
+    videoContainer.style.display = "flex";
 
-    soundPanel.style.display="none";
+    soundPanel.style.display = "none";
 
-    videoPlayer.src=videoUrl;
+    videoPlayer.src = videoUrl;
 
-    videoPlayer.muted=false;
+    videoPlayer.muted = false;
 
     videoPlayer.load();
 
@@ -1298,13 +1238,13 @@ async function playVideo(videoUrl){
             "Autoplay with sound blocked."
         );
 
-        videoPlayer.muted=true;
+        videoPlayer.muted = true;
 
         try{
 
             await videoPlayer.play();
 
-            soundPanel.style.display=
+            soundPanel.style.display =
                 "block";
 
         }
@@ -1320,7 +1260,7 @@ async function playVideo(videoUrl){
         }
     }
 
-    videoPlayer.onended=
+    videoPlayer.onended =
         function(){
 
             closeVideo();
@@ -1334,14 +1274,14 @@ async function playVideo(videoUrl){
 
 function enableSound(){
 
-    videoPlayer.muted=false;
+    videoPlayer.muted = false;
 
-    soundPanel.style.display="none";
+    soundPanel.style.display = "none";
 
     videoPlayer
         .play()
         .catch(
-            error=>{
+            error => {
                 console.error(
                     "Sound enable error:",
                     error
@@ -1367,41 +1307,27 @@ function closeVideo(){
 
     videoPlayer.load();
 
-    videoContainer.style.display="none";
+    videoContainer.style.display = "none";
 
-    soundPanel.style.display="none";
+    soundPanel.style.display = "none";
 
-    videoPlaying=false;
-    scannerRunning=false;
+    videoPlaying = false;
 
-    candidateId=null;
-    candidateCount=0;
+    scannerRunning = false;
 
-    lastDetectionTime=Date.now();
+    candidateId = null;
+    candidateCount = 0;
 
-    startButton.disabled=false;
+    lastDetectionTime = Date.now();
 
-    startButton.innerText=
+    startButton.disabled = false;
+
+    startButton.innerText =
         "START SCANNER";
 
-    statusText.innerText=
-        "Ready. Point camera at PHOTO.";
+    statusText.innerText =
+        "Ready. Press START SCANNER.";
 
-    /*
-       Restart scanner after a short delay.
-    */
-
-    setTimeout(
-        function(){
-
-            if(!videoPlaying){
-
-                startScanner();
-            }
-
-        },
-        500
-    );
 }
 
 
@@ -1413,67 +1339,51 @@ window.addEventListener(
     "load",
     function(){
 
-        camera=
+        camera =
             document.getElementById(
                 "camera"
             );
 
-        canvas=
+        canvas =
             document.getElementById(
                 "canvas"
             );
 
-        context=
+        context =
             canvas.getContext("2d");
 
-        statusText=
+        statusText =
             document.getElementById(
                 "status"
             );
 
-        startButton=
+        startButton =
             document.getElementById(
                 "startButton"
             );
 
-        videoContainer=
+        videoContainer =
             document.getElementById(
                 "videoContainer"
             );
 
-        videoPlayer=
+        videoPlayer =
             document.getElementById(
                 "videoPlayer"
             );
 
-        soundPanel=
+        soundPanel =
             document.getElementById(
                 "soundPanel"
             );
 
-        /*
-           Wait for OpenCV.js.
-        */
+        startButton.addEventListener(
+            "click",
+            startScanner
+        );
 
-        const checkOpenCV=
-            setInterval(
-                function(){
+        waitForOpenCV();
 
-                    if(
-                        typeof cv!=="undefined" &&
-                        cv.Mat
-                    ){
-
-                        clearInterval(
-                            checkOpenCV
-                        );
-
-                        onOpenCvReady();
-                    }
-
-                },
-                300
-            );
     }
 );
 
