@@ -70,6 +70,7 @@ h1{margin:12px 0 8px;font-size:23px}
 <h1>MAGIC PHOTO FRAME</h1>
 
 <button id="startButton" disabled>LOADING OPENCV...</button>
+<div id="startupError" style="display:none;margin:8px 12px;color:#ffcc66;font-size:14px;"></div>
 
 <video id="camera" autoplay playsinline muted></video>
 <canvas id="canvas"></canvas>
@@ -116,7 +117,7 @@ const photoVideos = Array.from(
    ========================================================= */
 
 let camera, canvas, context, statusText, debugText;
-let startButton, videoContainer, videoPlayer, soundPanel;
+let startButton, videoContainer, videoPlayer, soundPanel, startupError;
 
 /* =========================================================
    3. STATE
@@ -162,6 +163,16 @@ function setStatus(message){
 
 function setDebug(message){
     debugText.innerText = message || "";
+}
+
+function showStartupError(message){
+    startupError.style.display = "block";
+    startupError.innerText = message;
+}
+
+function clearStartupError(){
+    startupError.style.display = "none";
+    startupError.innerText = "";
 }
 
 /* =========================================================
@@ -375,9 +386,10 @@ async function loadReferencePhotos(){
 
         console.error("REFERENCE LOAD ERROR:", error);
 
+        referencePhotos = [];
+
         setStatus(
-            "PHOTO LOAD ERROR: " +
-            error.message
+            "PHOTO LOAD ERROR"
         );
 
         setDebug(
@@ -399,11 +411,21 @@ async function loadReferencePhotos(){
 
 async function startScanner(){
 
-    if (scannerRunning || videoPlaying) return;
+    /*
+       IMPORTANT:
+       The button stays disabled during startup. Previously it could
+       switch ACTIVE -> DISABLED -> ACTIVE when any startup step failed.
+       That made it look like the button itself was broken.
+    */
+
+    if (scannerRunning || videoPlaying || loadingReferences){
+        return;
+    }
+
+    clearStartupError();
 
     if (!openCVReady){
-
-        setStatus("OpenCV is not ready yet.");
+        setStatus("OpenCV is still loading. Please wait...");
         return;
     }
 
@@ -411,19 +433,23 @@ async function startScanner(){
         !navigator.mediaDevices ||
         !navigator.mediaDevices.getUserMedia
     ){
-
-        setStatus(
-            "This browser cannot access the camera."
+        setStatus("Camera is not available in this browser.");
+        showStartupError(
+            "Open this page in Chrome over HTTPS and allow camera access."
         );
         return;
     }
 
+    startButton.disabled = true;
+    startButton.innerText = "STARTING...";
+    setStatus("Starting scanner...");
+    setDebug("Step 1/3: requesting camera permission...");
+
     try{
 
-        startButton.disabled = true;
-
-        setStatus("Requesting rear camera permission...");
-        setDebug("");
+        /*
+           Step 1: camera
+        */
 
         const stream =
             await navigator.mediaDevices.getUserMedia({
@@ -439,14 +465,35 @@ async function startScanner(){
 
         await camera.play();
 
-        setStatus("Camera started. Loading 19 reference photos...");
+        setDebug("Step 2/3: camera started. Loading 19 photos...");
+
+        /*
+           Step 2: references
+        */
 
         if (referencePhotos.length === 0){
+
+            startButton.innerText = "LOADING 19 PHOTOS...";
+
             await loadReferencePhotos();
         }
 
+        /*
+           Step 3: ORB
+        */
+
+        setDebug(
+            "Step 3/3: creating live scanner (" +
+            referencePhotos.length +
+            "/19 references ready)..."
+        );
+
         if (!liveOrb){
             liveOrb = createORB();
+        }
+
+        if (!liveOrb){
+            throw new Error("OpenCV ORB could not be created.");
         }
 
         scannerRunning = true;
@@ -455,9 +502,16 @@ async function startScanner(){
         lastScanTime = 0;
 
         startButton.innerText = "SCANNING...";
+        startButton.disabled = true;
 
         setStatus(
-            "Scanning. Point the camera at one of PHOTO_001 to PHOTO_019."
+            "Scanner is ON. Point camera at PHOTO_001 to PHOTO_019."
+        );
+
+        setDebug(
+            "Camera OK | OpenCV OK | References OK (" +
+            referencePhotos.length +
+            "/19)"
         );
 
         requestAnimationFrame(scanFrame);
@@ -465,31 +519,80 @@ async function startScanner(){
     }
     catch(error){
 
-        console.error("START ERROR:", error);
+        console.error("STARTUP ERROR:", error);
 
         scannerRunning = false;
+
+        /*
+           Stop camera if startup failed.
+        */
+        if (camera && camera.srcObject){
+
+            camera.srcObject
+                .getTracks()
+                .forEach(
+                    track => track.stop()
+                );
+
+            camera.srcObject = null;
+        }
+
         startButton.disabled = false;
         startButton.innerText = "START SCANNER";
 
-        if (error.name === "NotAllowedError"){
+        let message = error && error.message
+            ? error.message
+            : String(error);
+
+        if (
+            message.includes("Image failed") ||
+            message.includes("PHOTO_")
+        ){
+            setStatus(
+                "Reference photo loading failed."
+            );
+
+            showStartupError(
+                message +
+                " Check the photos folder and all 19 JPG files."
+            );
+        }
+        else if (error.name === "NotAllowedError"){
 
             setStatus(
-                "Camera permission denied. Allow camera access in Chrome."
+                "Camera permission was denied."
+            );
+
+            showStartupError(
+                "Chrome camera permission is required. Tap the camera/lock icon in the address bar and allow Camera."
             );
 
         }
         else if (error.name === "NotFoundError"){
 
-            setStatus("No camera found.");
+            setStatus(
+                "No camera was found."
+            );
+
+            showStartupError(
+                "This device/browser did not provide a camera."
+            );
 
         }
         else{
 
             setStatus(
-                "START ERROR: " +
-                error.message
+                "Scanner startup failed."
+            );
+
+            showStartupError(
+                "ERROR: " + message
             );
         }
+
+        setDebug(
+            "Startup stopped. Fix the message above, then press START SCANNER again."
+        );
     }
 }
 
@@ -1106,6 +1209,9 @@ window.addEventListener(
 
         debugText =
             document.getElementById("debug");
+
+        startupError =
+            document.getElementById("startupError");
 
         startButton =
             document.getElementById("startButton");
